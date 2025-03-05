@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>写真アップロード</title>
+</head>
+<body>
+    <video id="video" width="320" height="240" autoplay></video>
+    <button id="capture">撮影</button>
+    <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
+    <p id="result"></p>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const result = document.getElementById('result');
+
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => { video.srcObject = stream; });
+
+        document.getElementById('capture').addEventListener('click', async () => {
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            canvas.toBlob(async (blob) => {
+                const formData = new FormData();
+                formData.append('photo', blob, 'photo.jpg');
+
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                result.innerText = `感情: ${data.emotion.split(",")[0]}`;
+                window.location.href = data.emotion.split(",")[1]
+            }, 'image/jpeg');
+        });
+    </script>
+</body>
+</html>
